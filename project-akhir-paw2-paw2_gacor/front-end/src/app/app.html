@@ -1,0 +1,55 @@
+<nav class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+    <div class="flex items-center gap-6">
+      <a
+        routerLink="/"
+        class="text-2xl font-bold text-blue-600 hover:text-blue-800 transition-colors"
+      >
+        GACOR
+      </a>
+      <div class="hidden md:flex gap-4">
+        <a
+          routerLink="/"
+          class="px-3 py-2 text-gray-700 font-medium hover:text-blue-600 transition-colors"
+          >Home</a
+        >
+        <a
+          routerLink="/recipe"
+          class="px-3 py-2 text-gray-700 font-medium hover:text-blue-600 transition-colors"
+          >Recipes</a
+        >
+        <a
+          routerLink="/review"
+          class="px-3 py-2 text-gray-700 font-medium hover:text-blue-600 transition-colors"
+          >Reviews</a
+        >
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      @if (authService.isLoggedIn()) {
+      <button
+        (click)="authService.logout()"
+        class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors text-sm font-medium"
+      >
+        Logout
+      </button>
+      } @else {
+      <a
+        routerLink="/login"
+        class="text-gray-700 font-medium hover:text-blue-600 px-3 py-2"
+        >Login</a
+      >
+      <a
+        routerLink="/register"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+      >
+        Register
+      </a>
+      }
+    </div>
+  </div>
+</nav>
+
+<main class="container mx-auto mt-8 px-4 pb-12">
+  <router-outlet />
+</main>

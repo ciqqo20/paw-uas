@@ -1,0 +1,339 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative min-h-screen pb-24">
+  <!-- Header -->
+  <div class="mb-8 text-center pt-8">
+    <h1 class="text-4xl font-bold text-gray-900 mb-2">
+      Recipes
+    </h1>
+    <p class="text-lg text-gray-600">
+      Find your next favorite meal.
+    </p>
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="mb-8 flex flex-col md:flex-row gap-4">
+    <div class="flex-grow relative">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Search recipes..." 
+        class="w-full bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      >
+      <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+        🔍
+      </div>
+    </div>
+    
+    <!-- Category Filter -->
+    <select 
+      [(ngModel)]="selectedCategory" 
+      (change)="onFilterChange()"
+      class="bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+      <option value="">All Categories</option>
+      <option value="utama">Utama</option>
+      <option value="pembuka">Pembuka</option>
+      <option value="penutup">Penutup</option>
+      <option value="minuman">Minuman</option>
+      <option value="snack">Snack</option>
+    </select>
+
+    <!-- Difficulty Filter -->
+    <select 
+      [(ngModel)]="selectedDifficulty" 
+      (change)="onFilterChange()"
+      class="bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+      <option value="">All Difficulties</option>
+      <option value="mudah">Mudah</option>
+      <option value="sedang">Sedang</option>
+      <option value="sulit">Sulit</option>
+    </select>
+
+    <button 
+      (click)="onSearch()"
+      class="bg-blue-600 text-white font-medium px-6 py-2 rounded-md hover:bg-blue-700 transition-colors">
+      Search
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="text-center py-12">
+    <p class="text-xl text-gray-500">Loading...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="bg-red-100 border border-red-400 text-red-700 p-4 rounded mb-8 text-center">
+    {{ error }}
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && recipes.length === 0" class="text-center py-12">
+    <p class="text-lg text-gray-500">No recipes found.</p>
+  </div>
+
+  <!-- Recipe Grid -->
+  <div *ngIf="!loading && recipes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <div *ngFor="let recipe of recipes" class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+      <!-- Image Area -->
+      <div class="h-48 bg-gray-100 relative cursor-pointer" (click)="openDetailModal(recipe)">
+        <img [src]="recipe.foto" [alt]="recipe.nama" class="w-full h-full object-cover">
+        <div class="absolute top-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-xs font-medium">
+          {{ recipe.waktuMasak }} Min
+        </div>
+      </div>
+      
+      <div class="p-4 flex-grow flex flex-col">
+        <h3 class="text-xl font-bold mb-2 text-gray-900 cursor-pointer hover:text-blue-600" (click)="openDetailModal(recipe)">{{ recipe.nama }}</h3>
+        
+        <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+           {{ recipe.bahan.join(', ') }}
+        </p>
+        
+        <div class="flex flex-wrap gap-2 mb-4">
+          <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+            {{ recipe.kategori }}
+          </span>
+          <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+            {{ recipe.tingkatKesulitan }}
+          </span>
+          <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium">
+            {{ recipe.porsi }} Porsi
+          </span>
+        </div>
+        
+        <div class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+               {{ recipe.createdBy?.nama ? recipe.createdBy.nama.charAt(0).toUpperCase() : '?' }}
+            </div>
+            <span class="text-sm text-gray-600 truncate max-w-[100px]">
+              {{ recipe.createdBy?.nama || 'Unknown' }}
+            </span>
+          </div>
+          <button (click)="openDetailModal(recipe)" class="text-blue-600 text-sm font-medium hover:text-blue-800">
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <button 
+    (click)="openCreateModal()"
+    class="fixed bottom-8 right-8 bg-blue-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-blue-700 transition-colors z-50">
+    +
+  </button>
+
+  <!-- Create Recipe Modal -->
+  <div *ngIf="showCreateModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50" (click)="closeCreateModal()"></div>
+    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl relative z-10 flex flex-col">
+      <div class="p-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-20 rounded-t-lg">
+        <h2 class="text-xl font-bold text-gray-900">Create New Recipe</h2>
+        <button (click)="closeCreateModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+      </div>
+      <div class="p-6">
+        <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="col-span-1 md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Recipe Name</label>
+              <input type="text" formControlName="nama" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Cook Time (min)</label>
+              <input type="number" formControlName="waktuMasak" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Servings</label>
+              <input type="number" formControlName="porsi" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <select formControlName="kategori" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white">
+                <option value="utama">Utama</option>
+                <option value="pembuka">Pembuka</option>
+                <option value="penutup">Penutup</option>
+                <option value="minuman">Minuman</option>
+                <option value="snack">Snack</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+              <select formControlName="tingkatKesulitan" class="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white">
+                <option value="mudah">Mudah</option>
+                <option value="sedang">Sedang</option>
+                <option value="sulit">Sulit</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Recipe Photo</label>
+            <input type="file" (change)="onFileSelected($event)" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            <p *ngIf="!selectedFile && submitError" class="text-red-600 text-sm mt-1">Photo is required</p>
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-sm font-medium text-gray-700">Ingredients</label>
+              <button type="button" (click)="addBahan()" class="text-blue-600 text-sm font-medium hover:text-blue-800">+ Add</button>
+            </div>
+            <div formArrayName="bahan" class="space-y-2">
+              <div *ngFor="let item of bahanArray.controls; let i=index" class="flex gap-2">
+                <input [formControlName]="i" type="text" placeholder="e.g. 2 eggs" class="flex-grow border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                <button type="button" (click)="removeBahan(i)" class="text-red-600 hover:text-red-800" *ngIf="bahanArray.length > 1">&times;</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="block text-sm font-medium text-gray-700">Steps</label>
+              <button type="button" (click)="addLangkah()" class="text-blue-600 text-sm font-medium hover:text-blue-800">+ Add</button>
+            </div>
+            <div formArrayName="langkah" class="space-y-2">
+              <div *ngFor="let item of langkahArray.controls; let i=index" class="flex gap-2">
+                <span class="text-gray-500 pt-2 w-6 text-sm">{{ i + 1 }}.</span>
+                <textarea [formControlName]="i" rows="2" placeholder="e.g. Mix ingredients..." class="flex-grow border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"></textarea>
+                <button type="button" (click)="removeLangkah(i)" class="text-red-600 hover:text-red-800 h-fit" *ngIf="langkahArray.length > 1">&times;</button>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="submitError" class="bg-red-50 text-red-700 p-3 rounded text-sm">
+            {{ submitError }}
+          </div>
+          <div class="pt-4 border-t border-gray-200 flex justify-end gap-3">
+            <button type="button" (click)="closeCreateModal()" class="px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors">Cancel</button>
+            <button 
+              type="submit" 
+              [disabled]="submitLoading"
+              class="bg-blue-600 text-white font-medium px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50">
+              {{ submitLoading ? 'Saving...' : 'Publish' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Recipe Modal -->
+  <div *ngIf="showDetailModal && selectedRecipe" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/50" (click)="closeDetailModal()"></div>
+    <div class="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-xl relative z-10 flex flex-col">
+      
+      <!-- Header Image -->
+      <div class="relative h-64 md:h-80 bg-gray-100 flex-shrink-0">
+        <img [src]="selectedRecipe.foto" [alt]="selectedRecipe.nama" class="w-full h-full object-cover">
+        
+        <!-- Delete Button -->
+        <button *ngIf="canDelete(selectedRecipe)" 
+          (click)="deleteRecipe()" 
+          [disabled]="deleteLoading"
+          class="absolute top-4 left-4 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 shadow-md transition-colors z-10 disabled:opacity-50">
+          <span *ngIf="!deleteLoading" class="text-sm">🗑️</span>
+          <span *ngIf="deleteLoading" class="animate-spin text-xs">↻</span>
+        </button>
+
+        <!-- Close Button -->
+        <button (click)="closeDetailModal()" class="absolute top-4 right-4 bg-white text-gray-800 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 shadow-md transition-colors z-10">
+          &times;
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="p-6 md:p-8">
+        <!-- Title & Info -->
+        <div class="mb-8 border-b border-gray-200 pb-6">
+            <div class="flex gap-2 mb-2">
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium uppercase">
+                    {{ selectedRecipe.kategori }}
+                </span>
+                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium uppercase">
+                    {{ selectedRecipe.tingkatKesulitan }}
+                </span>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">{{ selectedRecipe.nama }}</h2>
+            <div class="flex items-center justify-between text-sm text-gray-600">
+                <div class="flex items-center gap-2">
+                    <span class="font-medium">By {{ selectedRecipe.createdBy?.nama || 'Unknown' }}</span>
+                </div>
+                <div class="flex gap-4">
+                    <span>⏱️ {{ selectedRecipe.waktuMasak }}m</span>
+                    <span>🍽️ {{ selectedRecipe.porsi }} ppl</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Ingredients -->
+            <div class="md:col-span-1">
+                <h3 class="text-lg font-bold mb-4 text-gray-900">Ingredients</h3>
+                <ul class="space-y-2 text-gray-700">
+                    <li *ngFor="let bahan of selectedRecipe.bahan" class="flex items-start gap-2">
+                        <span class="text-blue-500 mt-1">•</span>
+                        <span>{{ bahan }}</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Steps -->
+            <div class="md:col-span-2">
+                <h3 class="text-lg font-bold mb-4 text-gray-900">Instructions</h3>
+                <div class="space-y-4">
+                    <div *ngFor="let langkah of selectedRecipe.langkah; let i = index" class="flex gap-4">
+                        <div class="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm">
+                            {{ i + 1 }}
+                        </div>
+                        <p class="text-gray-700 leading-relaxed">{{ langkah }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="mt-8 border-t border-gray-200 pt-8">
+          <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+            Reviews <span class="text-sm bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">{{ reviews.length }}</span>
+          </h3>
+
+          <!-- Add Review Form -->
+          <div *ngIf="currentUser; else loginPrompt" class="mb-8 bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h4 class="font-bold text-gray-800 mb-2 text-sm">Write a Review</h4>
+            <div class="flex gap-1 mb-2">
+                <button type="button" *ngFor="let star of [1,2,3,4,5]" (click)="reviewRating = star" class="text-xl focus:outline-none" [class.grayscale]="reviewRating < star">⭐</button>
+            </div>
+            <textarea [(ngModel)]="reviewComment" rows="2" class="w-full border border-gray-300 rounded-md p-2 mb-2 focus:ring-1 focus:ring-blue-500 outline-none text-sm" placeholder="Share your experience..."></textarea>
+            <div *ngIf="submitReviewError" class="text-red-600 text-xs mb-2">{{ submitReviewError }}</div>
+            <button (click)="submitReview()" [disabled]="submitReviewLoading" class="bg-blue-600 text-white font-medium px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50">
+              {{ submitReviewLoading ? 'Posting...' : 'Post Review' }}
+            </button>
+          </div>
+
+          <ng-template #loginPrompt>
+            <div class="text-center p-4 bg-gray-50 rounded-lg mb-8 text-sm text-gray-500">
+              Please <a href="/login" class="text-blue-600 hover:underline">log in</a> to leave a review.
+            </div>
+          </ng-template>
+
+          <!-- Review List -->
+          <div *ngIf="reviewsLoading" class="text-center text-gray-500 text-sm">Loading reviews...</div>
+          <div *ngIf="!reviewsLoading && reviews.length === 0" class="text-gray-500 italic text-sm">No reviews yet.</div>
+
+          <div class="space-y-4">
+            <div *ngFor="let review of reviews" class="bg-white border border-gray-200 rounded-lg p-4 relative">
+                <button *ngIf="canDeleteReview(review)" (click)="deleteReview(review._id)" class="absolute top-2 right-2 text-red-500 hover:text-red-700 text-sm" title="Delete">&times;</button>
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="font-medium text-sm text-gray-900">{{ review.user.nama }}</div>
+                    <div class="flex text-yellow-500 text-xs">
+                        <span *ngFor="let s of getStars(review.rating)">★</span>
+                    </div>
+                    <span class="text-xs text-gray-400">{{ review.createdAt | date:'shortDate' }}</span>
+                </div>
+                <p class="text-sm text-gray-700">{{ review.komentar }}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
