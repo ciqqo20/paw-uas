@@ -311,6 +311,8 @@ export class Recipe implements OnInit {
     formData.append('bahan', JSON.stringify(formValue.bahan));
     formData.append('langkah', JSON.stringify(formValue.langkah));
 
+
+    // kirim ke backend
     this.recipeService.createRecipe(formData).subscribe({
       next: (response) => {
         if (response.success) {
@@ -345,6 +347,8 @@ export class Recipe implements OnInit {
 
     if (!confirm('Are you sure you want to delete this recipe?')) return;
 
+
+    // kirim ke backend
     this.deleteLoading = true;
     this.recipeService.deleteRecipe(this.selectedRecipe._id).subscribe({
       next: (response) => {
